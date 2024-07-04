@@ -1,0 +1,123 @@
+#**************************#
+# Práctica 1 - Ejercicio 2 #
+#**************************#
+
+#----------#
+# Paquetes #
+#----------#
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(nortest) #test de normalidad de Anderson-Darling, test de Lilliefors
+library(car) # test de homogeneidad de variancias de Levene (no paramétrico)
+
+datos <- data.frame(Dosis = factor(rep(c(0, 4, 8, 12), times = 5),
+                                   levels = c(0, 4, 8, 12)),
+                    Rendimiento = c(37,	39,	45,	42,
+                                    35,	42,	41,	44,
+                                    33,	41,	44,	40,
+                                    34,	43,	43,	43,
+                                    32,	40,	42,	41))
+
+#---------------------#
+# Anáisis descriptivo #
+#---------------------#
+
+(medias <- datos %>% group_by(Dosis) %>% 
+    summarise(Media = mean(x = Rendimiento)))
+
+(desvios <- datos %>% group_by(Dosis) %>% 
+    summarise(Desvio = sd(x = Rendimiento)))
+
+stripchart(datos$Rendimiento ~ datos$Dosis, pch = 19, vertical = TRUE)
+points(medias, col = "red", pch = 18)
+lines(medias, col = "red")
+
+#-------#
+# ANOVA #
+#-------#
+
+modelo1 <- aov(Rendimiento ~ Dosis, data = datos)
+
+anova(modelo1)
+
+#-------------------------------------#
+# Efectos lineal, cuadrático y cúbico #
+#-------------------------------------#
+
+# Con la función "contrasts" se definen los contrastes ortogonales para un
+# factor. Usamos la función "contr.poly()" con el argumento n=4 para asignarle a
+# la dosis los contrastes ortogonales que permiten descomponer la SCDosisi en
+# sus efectos lineal, cuadrático y cúbico
+contrasts(datos$Dosis) <- contr.poly(n = 4)
+
+summary(object = aov(Rendimiento ~ Dosis, data = datos),
+        split = list(Dosis = list("Lineal" = 1,
+                                  "Cuadratico" = 2,
+                                  "Cubico" = 3)))
+
+# cuidado, hay que ajustar de nuevo el modelo con la función aov porque
+# definimos los contrastes luego de ajustar el modelo1, entonces el modelo1
+# tiene "cargados" otros contrastes por defecto
+
+#---------------------#
+# Modelo de regresión #
+#---------------------#
+
+# Generamos una columna en el data.frame datos que tenga las dosis de abono y
+# sea de clase "numeric"
+datos <- mutate(datos,
+                Dosis_num = as.numeric(as.character(Dosis)))
+
+modelo2 <- lm(Rendimiento ~ Dosis_num + I(Dosis_num^2),
+              data = datos)
+# Es conveniente introducir la operación para calcular la dosis de abono al
+# cuadrado dentro de la función "I()" si la transformación se aplica
+# directamente dentro de la fórmula en la función "lm()"
+
+summary(modelo2)
+
+anova(modelo2)
+
+#---------------------------#
+# Verificación de supuestos #
+#---------------------------#
+
+plot(x = modelo2, which = 2, pch = 19, id.n = 0)
+shapiro.test(modelo2$residuals)
+
+plot(x = modelo2, which = 1, pch = 19, id.n = 0, add.smooth = FALSE)
+
+#-------------------------------------#
+# Búsqueda de las condiciones óptimas #
+#-------------------------------------#
+
+# Generamos una grilla con valores de las dosis entre los estudiados (de 0 a 12)
+x <- seq(from = 0, to = 12, by = 0.05)
+
+# Buscamos los valores predichos por el modelo de regresión ajustado y sus
+# intervalos de confianza:
+pred <- predict(modelo2,
+                newdata = data.frame(Dosis_num = x),
+                se.fit = TRUE,
+                interval = "confidence")
+
+# Unimos los predichos con los valores de la dosis:
+pred <- data.frame(pred$fit) %>% 
+  mutate(Dosis_num = x)
+
+# Representamos la recta ajustada por el modelo en la grilla de valores:
+plot(pred$Dosis_num, pred$fit, type = "l")
+
+# Otra opción con ggplot2:
+ggplot(pred, aes(x = Dosis_num, y = fit)) +
+  geom_line()
+
+# Vemos los 10 valores predichos más grandes:
+pred %>% arrange(desc(fit)) %>% head(10)
+
+# Vemos el valor predicho más grande, que corresponde a una dosis de 8.6, para
+# la cual el rendimiento predicho se encuentra cubierto por el intervalo
+# (42.22;55.41) con una confianza del 95%
+pred[which.max(pred$fit),]

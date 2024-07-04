@@ -1,0 +1,37 @@
+---
+title: "Parcelas divididas (split-plot)"
+output:
+  pdf_document:
+    template: default
+classoption: twocolumn
+header-includes:
+  - \usepackage{setspace}
+  - \singlespacing
+  - \setlength{\columnsep}{1cm}
+  - \pagenumbering{gobble}
+geometry: "margin=1cm"
+---
+
+Cuando no es posible hacer una completa aleatorización en el orden de las corridas de un experimento se suele recurrir a una generalización del diseño factorial: el **diseño de parcelas divididas**.
+
+*En la fabricación del papel interesa estudiar la resistencia a la tensión. Si se tuvieran 3 métodos de preparación (factor A) y 4 temperaturas de cocción (factor B) se requerirían 12 observaciones para una réplica completa. Si el experimentador decidiera hacer 3 réplicas requeriría de 36 observaciones.*
+
+*Por limitaciones en la fábrica sólo pueden realizarse 3 lotes por día (12 observaciones) entonces decide hacer un lote con cada método y probar las 4 temperaturas en cada lote. Es claro ver que el orden de las corridas no es aleatorio: se hacen las 4 temperaturas para el método 1, luego para el método 2 y luego para el método 3, teniendo así un diseño de parcelas divididas bloqueando por día de fabricación (réplica), haciendo 3 réplicas sólo se requieren 9 lotes. Para hacer un orden aleatorio se requeriría una observación de cada lote, y eso implica fabricar 36 lotes (muy poco práctico \*\*E IMPOSIBLE\*\*)*
+
+En el ejemplo, cada réplica o bloque se divide en tres partes llamadas **parcelas completas** cuya división está dada por los **tratamientos de parcela completa** (método) y cada una de ellas se divide en cuatro partes llamadas **parcelas subdivididas** cuya división está dada por los **tratamientos de la subparcela** (temperatura).
+
+Esta forma particular de disponer los tratamientos implica la necesidad de considerar dos errores experimentales, uno para cada tipo de tratamiento. Además, es de destacar que las observaciones para las subunidades de la misma parcela presentarán correlación positiva.
+
+*El modelo que representa el comportamiento de la resistencia del papel es*
+
+$$y_{ijk} = \mu+\alpha_i+\tau_k+d_{ik}+\beta_j+(\alpha\beta)_{ij}+e_{ijk}$$
+$$i=\overline{1,3}\space{};\space{}j=\overline{1,4}\space{};\space{}k=\overline{1,3}$$
+
+*en donde:*
+
+1.  $\alpha_i$ *es el efecto del factor A (método de preparación)*
+2.  $\tau_k$ *es el efecto bloque (día/réplica)*
+3.  $d_{ik}$ *es el error aleatorio de la parcela completa (lote) que depende tanto del método de preparación como el día de fabricación (réplica)*
+4.  $\beta_j$ *es el efecto del factor B (temperatura)*
+5.  $(\alpha\beta)_{ij}$ es el *efecto interacción entre A y B*
+6.  $e_{ijk}$ *es el error aleatorio de la subparcela, se supone que* $e_{ijk}\sim N(0,\sigma^2)$
